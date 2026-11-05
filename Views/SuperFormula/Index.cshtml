@@ -1,0 +1,2078 @@
+﻿@model WebApplication2.Models.SuperFormulaModel
+
+@{
+    ViewBag.Title = "3D Super Formula";
+}
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>
+        3D Super Formula
+    </title>
+
+
+    <!-- =====================================================
+         THREE.JS
+         ===================================================== -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        html,
+        body {
+            margin: 0;
+
+            padding: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            overflow: hidden;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background: #000;
+        }
+
+
+        body {
+            color: white;
+        }
+
+
+        /* =================================================
+           MAIN APPLICATION
+           ================================================= */
+
+        .app {
+            width: 100%;
+
+            height: 100vh;
+
+            display: flex;
+
+            background: #000;
+        }
+
+
+        /* =================================================
+           LEFT CONTROL PANEL
+           ================================================= */
+
+        .controls {
+            width: 360px;
+
+            min-width: 360px;
+
+            height: 100%;
+
+            overflow-y: auto;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #10101a,
+                    #050509
+                );
+
+            border-right:
+                1px solid #252535;
+
+            padding: 25px;
+        }
+
+
+        .title {
+            font-size: 26px;
+
+            font-weight: bold;
+
+            margin-bottom: 5px;
+        }
+
+
+        .subtitle {
+            color: #888;
+
+            font-size: 13px;
+
+            margin-bottom: 25px;
+        }
+
+
+        .section-title {
+            font-size: 16px;
+
+            font-weight: bold;
+
+            color: #00ffff;
+
+            margin-top: 25px;
+
+            margin-bottom: 18px;
+
+            padding-bottom: 8px;
+
+            border-bottom:
+                1px solid #252535;
+        }
+
+
+        /* =================================================
+           SLIDER
+           ================================================= */
+
+        .control {
+            margin-bottom: 20px;
+        }
+
+
+        .control-header {
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            align-items: center;
+
+            margin-bottom: 8px;
+        }
+
+
+        .control-name {
+            font-size: 14px;
+
+            font-weight: bold;
+        }
+
+
+        .control-value {
+            color: #00ffff;
+
+            background: #111;
+
+            border:
+                1px solid #303040;
+
+            padding:
+                4px 9px;
+
+            border-radius: 5px;
+
+            min-width: 65px;
+
+            text-align: center;
+
+            font-size: 13px;
+        }
+
+
+        input[type=range] {
+            width: 100%;
+
+            cursor: pointer;
+
+            accent-color: #00ffff;
+        }
+
+
+        .range-info {
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            color: #666;
+
+            font-size: 10px;
+
+            margin-top: 3px;
+        }
+
+
+        /* =================================================
+           BUTTONS
+           ================================================= */
+
+        .buttons {
+            display: flex;
+
+            gap: 10px;
+
+            margin-top: 25px;
+
+            margin-bottom: 25px;
+        }
+
+
+        button {
+            flex: 1;
+
+            padding: 11px;
+
+            border: none;
+
+            border-radius: 6px;
+
+            cursor: pointer;
+
+            font-weight: bold;
+
+            color: white;
+
+            background: #202030;
+        }
+
+
+        button:hover {
+            background: #303040;
+        }
+
+
+        #randomButton {
+            background: #006b70;
+        }
+
+
+        #randomButton:hover {
+            background: #008b90;
+        }
+
+
+        /* =================================================
+           INFORMATION
+           ================================================= */
+
+        .info {
+            font-size: 12px;
+
+            line-height: 1.6;
+
+            color: #777;
+
+            padding-top: 10px;
+        }
+
+
+        .info strong {
+            color: #aaa;
+        }
+
+
+        /* =================================================
+           3D AREA
+           ================================================= */
+
+        .viewer {
+            position: relative;
+
+            flex: 1;
+
+            height: 100%;
+
+            overflow: hidden;
+
+            background: #000;
+        }
+
+
+        #threeContainer {
+            width: 100%;
+
+            height: 100%;
+        }
+
+
+        /* =================================================
+           TOP LABEL
+           ================================================= */
+
+        .viewer-title {
+            position: absolute;
+
+            top: 25px;
+
+            left: 30px;
+
+            z-index: 10;
+
+            pointer-events: none;
+        }
+
+
+        .viewer-title h1 {
+            margin: 0;
+
+            font-size: 24px;
+
+            letter-spacing: 2px;
+        }
+
+
+        .viewer-title p {
+            margin-top: 6px;
+
+            color: #777;
+
+            font-size: 12px;
+        }
+
+
+        /* =================================================
+           BOTTOM INFORMATION
+           ================================================= */
+
+        .viewer-help {
+            position: absolute;
+
+            bottom: 20px;
+
+            left: 50%;
+
+            transform:
+                translateX(-50%);
+
+            color: #666;
+
+            font-size: 12px;
+
+            z-index: 10;
+
+            pointer-events: none;
+
+            white-space: nowrap;
+        }
+
+
+        /* =================================================
+           MOBILE
+           ================================================= */
+
+        @@media(max-width: 800px) {
+
+            .app {
+                flex-direction: column;
+            }
+
+
+            .controls {
+                width: 100%;
+
+                min-width: 100%;
+
+                height: 45%;
+
+                border-right: none;
+
+                border-bottom:
+                    1px solid #252535;
+            }
+
+
+            .viewer {
+                height: 55%;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <div class="app">
+
+
+        <!-- =====================================================
+             LEFT CONTROL PANEL
+             ===================================================== -->
+
+        <div class="controls">
+
+
+            <div class="title">
+                3D Super Formula
+            </div>
+
+
+            <div class="subtitle">
+                Mathematical 3D Shape Generator
+            </div>
+
+
+            <!-- =================================================
+                 FIRST SUPERFORMULA
+                 ================================================= -->
+
+            <div class="section-title">
+
+                Horizontal Shape
+
+            </div>
+
+
+            <!-- M1 -->
+
+            <div class="control">
+
+                <div class="control-header">
+
+                    <span class="control-name">
+                        M1
+                    </span>
+
+                    <span id="m1Value"
+                          class="control-value">
+
+                        @Model.M1.ToString("0.00")
+
+                    </span>
+
+                </div>
+
+
+                <input type="range"
+                       id="m1"
+                       min="0.1"
+                       max="20"
+                       step="0.01"
+                       value="@Model.M1" />
+
+
+                <div class="range-info">
+
+                    <span>0.1</span>
+
+                    <span>20</span>
+
+                </div>
+
+            </div>
+
+
+            <!-- N1A -->
+
+            <div class="control">
+
+                <div class="control-header">
+
+                    <span class="control-name">
+                        N1
+                    </span>
+
+                    <span id="n1aValue"
+                          class="control-value">
+
+                        @Model.N1A.ToString("0.00")
+
+                    </span>
+
+                </div>
+
+
+                <input type="range"
+                       id="n1a"
+                       min="0.05"
+                       max="5"
+                       step="0.01"
+                       value="@Model.N1A" />
+
+
+                <div class="range-info">
+
+                    <span>0.05</span>
+
+                    <span>5</span>
+
+                </div>
+
+            </div>
+
+
+            <!-- N2A -->
+
+            <div class="control">
+
+                <div class="control-header">
+
+                    <span class="control-name">
+                        N2
+                    </span>
+
+                    <span id="n2aValue"
+                          class="control-value">
+
+                        @Model.N2A.ToString("0.00")
+
+                    </span>
+
+                </div>
+
+
+                <input type="range"
+                       id="n2a"
+                       min="0.05"
+                       max="5"
+                       step="0.01"
+                       value="@Model.N2A" />
+
+
+                <div class="range-info">
+
+                    <span>0.05</span>
+
+                    <span>5</span>
+
+                </div>
+
+            </div>
+
+
+            <!-- N3A -->
+
+            <div class="control">
+
+                <div class="control-header">
+
+                    <span class="control-name">
+                        N3
+                    </span>
+
+                    <span id="n3aValue"
+                          class="control-value">
+
+                        @Model.N3A.ToString("0.00")
+
+                    </span>
+
+                </div>
+
+
+                <input type="range"
+                       id="n3a"
+                       min="0.05"
+                       max="5"
+                       step="0.01"
+                       value="@Model.N3A" />
+
+
+                <div class="range-info">
+
+                    <span>0.05</span>
+
+                    <span>5</span>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 SECOND SUPERFORMULA
+                 ================================================= -->
+
+            <div class="section-title">
+
+                Vertical Shape
+
+            </div>
+
+
+            <!-- M2 -->
+
+            <div class="control">
+
+                <div class="control-header">
+
+                    <span class="control-name">
+                        M2
+                    </span>
+
+                    <span id="m2Value"
+                          class="control-value">
+
+                        @Model.M2.ToString("0.00")
+
+                    </span>
+
+                </div>
+
+
+                <input type="range"
+                       id="m2"
+                       min="0.1"
+                       max="20"
+                       step="0.01"
+                       value="@Model.M2" />
+
+
+                <div class="range-info">
+
+                    <span>0.1</span>
+
+                    <span>20</span>
+
+                </div>
+
+            </div>
+
+
+            <!-- N1B -->
+
+            <div class="control">
+
+                <div class="control-header">
+
+                    <span class="control-name">
+                        Vertical N1
+                    </span>
+
+                    <span id="n1bValue"
+                          class="control-value">
+
+                        @Model.N1B.ToString("0.00")
+
+                    </span>
+
+                </div>
+
+
+                <input type="range"
+                       id="n1b"
+                       min="0.05"
+                       max="5"
+                       step="0.01"
+                       value="@Model.N1B" />
+
+
+                <div class="range-info">
+
+                    <span>0.05</span>
+
+                    <span>5</span>
+
+                </div>
+
+            </div>
+
+
+            <!-- N2B -->
+
+            <div class="control">
+
+                <div class="control-header">
+
+                    <span class="control-name">
+                        Vertical N2
+                    </span>
+
+                    <span id="n2bValue"
+                          class="control-value">
+
+                        @Model.N2B.ToString("0.00")
+
+                    </span>
+
+                </div>
+
+
+                <input type="range"
+                       id="n2b"
+                       min="0.05"
+                       max="5"
+                       step="0.01"
+                       value="@Model.N2B" />
+
+
+                <div class="range-info">
+
+                    <span>0.05</span>
+
+                    <span>5</span>
+
+                </div>
+
+            </div>
+
+
+            <!-- N3B -->
+
+            <div class="control">
+
+                <div class="control-header">
+
+                    <span class="control-name">
+                        Vertical N3
+                    </span>
+
+                    <span id="n3bValue"
+                          class="control-value">
+
+                        @Model.N3B.ToString("0.00")
+
+                    </span>
+
+                </div>
+
+
+                <input type="range"
+                       id="n3b"
+                       min="0.05"
+                       max="5"
+                       step="0.01"
+                       value="@Model.N3B" />
+
+
+                <div class="range-info">
+
+                    <span>0.05</span>
+
+                    <span>5</span>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 DISPLAY
+                 ================================================= -->
+
+            <div class="section-title">
+
+                Display
+
+            </div>
+
+
+            <!-- SCALE -->
+
+            <div class="control">
+
+                <div class="control-header">
+
+                    <span class="control-name">
+                        Scale
+                    </span>
+
+                    <span id="scaleValue"
+                          class="control-value">
+
+                        @Model.Scale.ToString("0")
+
+                    </span>
+
+                </div>
+
+
+                <input type="range"
+                       id="scale"
+                       min="30"
+                       max="180"
+                       step="1"
+                       value="@Model.Scale" />
+
+
+                <div class="range-info">
+
+                    <span>30</span>
+
+                    <span>180</span>
+
+                </div>
+
+            </div>
+
+
+            <!-- PARTICLE SIZE -->
+
+            <div class="control">
+
+                <div class="control-header">
+
+                    <span class="control-name">
+                        Particle Size
+                    </span>
+
+                    <span id="particleSizeValue"
+                          class="control-value">
+
+                        @Model.ParticleSize.ToString("0.0")
+
+                    </span>
+
+                </div>
+
+
+                <input type="range"
+                       id="particleSize"
+                       min="0.5"
+                       max="5"
+                       step="0.1"
+                       value="@Model.ParticleSize" />
+
+
+                <div class="range-info">
+
+                    <span>0.5</span>
+
+                    <span>5</span>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 BUTTONS
+                 ================================================= -->
+
+            <div class="buttons">
+
+                <button type="button"
+                        id="resetButton">
+
+                    Reset
+
+                </button>
+
+
+                <button type="button"
+                        id="randomButton">
+
+                    Random
+
+                </button>
+
+            </div>
+
+
+            <!-- =================================================
+                 INFORMATION
+                 ================================================= -->
+
+            <div class="info">
+
+                <strong>How it works</strong>
+
+                <br />
+
+                Two SuperFormula equations are combined
+                to create a mathematical 3D surface.
+
+                <br /><br />
+
+                <strong>Mouse</strong>
+
+                <br />
+
+                Drag to rotate the object.
+
+                <br />
+
+                Mouse wheel to zoom.
+
+            </div>
+
+
+        </div>
+
+
+        <!-- =====================================================
+             3D VIEWER
+             ===================================================== -->
+
+        <div class="viewer">
+
+
+            <div class="viewer-title">
+
+                <h1>
+                    SUPERFORMULA
+                </h1>
+
+                <p>
+                    REAL-TIME MATHEMATICAL 3D
+                </p>
+
+            </div>
+
+
+            <div id="threeContainer"></div>
+
+
+            <div class="viewer-help">
+
+                DRAG TO ROTATE &nbsp; • &nbsp;
+                SCROLL TO ZOOM
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+    <script>
+
+
+// ============================================================
+// GLOBAL THREE.JS VARIABLES
+// ============================================================
+
+var scene;
+
+var camera;
+
+var renderer;
+
+var particles;
+
+var particleMaterial;
+
+var particleGeometry;
+
+
+// ============================================================
+// ROTATION VARIABLES
+// ============================================================
+
+var rotationX = 0;
+
+var rotationY = 0;
+
+var targetRotationX = 0;
+
+var targetRotationY = 0;
+
+
+var isDragging = false;
+
+var previousMouseX = 0;
+
+var previousMouseY = 0;
+
+
+// ============================================================
+// CAMERA ZOOM
+// ============================================================
+
+var cameraDistance = 450;
+
+
+// ============================================================
+// DEFAULT VALUES
+// ============================================================
+
+var DEFAULTS = {
+
+    m1: @Model.M1.ToString(
+        System.Globalization.CultureInfo.InvariantCulture),
+
+    n1a: @Model.N1A.ToString(
+        System.Globalization.CultureInfo.InvariantCulture),
+
+    n2a: @Model.N2A.ToString(
+        System.Globalization.CultureInfo.InvariantCulture),
+
+    n3a: @Model.N3A.ToString(
+        System.Globalization.CultureInfo.InvariantCulture),
+
+
+    m2: @Model.M2.ToString(
+        System.Globalization.CultureInfo.InvariantCulture),
+
+    n1b: @Model.N1B.ToString(
+        System.Globalization.CultureInfo.InvariantCulture),
+
+    n2b: @Model.N2B.ToString(
+        System.Globalization.CultureInfo.InvariantCulture),
+
+    n3b: @Model.N3B.ToString(
+        System.Globalization.CultureInfo.InvariantCulture),
+
+
+    scale: @Model.Scale.ToString(
+        System.Globalization.CultureInfo.InvariantCulture),
+
+    particleSize: @Model.ParticleSize.ToString(
+        System.Globalization.CultureInfo.InvariantCulture)
+
+};
+
+
+// ============================================================
+// GET HTML ELEMENT
+// ============================================================
+
+function getElement(id) {
+
+    return document.getElementById(id);
+
+}
+
+
+// ============================================================
+// GET NUMBER
+// ============================================================
+
+function getNumber(id) {
+
+    return parseFloat(
+        getElement(id).value
+    );
+
+}
+
+
+// ============================================================
+// SUPER FORMULA
+// ============================================================
+
+function superFormula(
+    angle,
+    m,
+    n1,
+    n2,
+    n3,
+    a,
+    b
+) {
+
+    var part1 =
+        Math.cos(
+            m * angle / 4
+        ) / a;
+
+
+    var part2 =
+        Math.sin(
+            m * angle / 4
+        ) / b;
+
+
+    var value1 =
+        Math.pow(
+            Math.abs(part1),
+            n2
+        );
+
+
+    var value2 =
+        Math.pow(
+            Math.abs(part2),
+            n3
+        );
+
+
+    var sum =
+        value1 + value2;
+
+
+    if (sum <= 0) {
+
+        return 0;
+
+    }
+
+
+    var result =
+        Math.pow(
+            sum,
+            -1 / n1
+        );
+
+
+    return result;
+
+}
+
+
+// ============================================================
+// CREATE 3D SUPERFORMULA
+// ============================================================
+
+function createSuperFormula() {
+
+
+    // --------------------------------------------------------
+    // Read values
+    // --------------------------------------------------------
+
+    var m1 =
+        getNumber("m1");
+
+
+    var n1a =
+        getNumber("n1a");
+
+
+    var n2a =
+        getNumber("n2a");
+
+
+    var n3a =
+        getNumber("n3a");
+
+
+    var m2 =
+        getNumber("m2");
+
+
+    var n1b =
+        getNumber("n1b");
+
+
+    var n2b =
+        getNumber("n2b");
+
+
+    var n3b =
+        getNumber("n3b");
+
+
+    var scale =
+        getNumber("scale");
+
+
+    // --------------------------------------------------------
+    // Remove previous geometry
+    // --------------------------------------------------------
+
+    if (particles) {
+
+        scene.remove(particles);
+
+        particles.geometry.dispose();
+
+    }
+
+
+    // --------------------------------------------------------
+    // Resolution
+    //
+    // 160 x 80 = 12,800 particles
+    //
+    // Increase these values for more detail.
+    // --------------------------------------------------------
+
+    var thetaSteps = 160;
+
+    var phiSteps = 80;
+
+
+    var totalPoints =
+        thetaSteps * phiSteps;
+
+
+    var positions =
+        new Float32Array(
+            totalPoints * 3
+        );
+
+
+    var index = 0;
+
+
+    // --------------------------------------------------------
+    // Generate mathematical surface
+    // --------------------------------------------------------
+
+    for (
+        var i = 0;
+        i < thetaSteps;
+        i++
+    ) {
+
+
+        // Around the object
+
+        var theta =
+            -Math.PI +
+            (
+                2 * Math.PI * i
+                / (thetaSteps - 1)
+            );
+
+
+        // First SuperFormula
+
+        var r1 =
+            superFormula(
+                theta,
+                m1,
+                n1a,
+                n2a,
+                n3a,
+                1,
+                1
+            );
+
+
+        for (
+            var j = 0;
+            j < phiSteps;
+            j++
+        ) {
+
+
+            // Top to bottom
+
+            var phi =
+                -Math.PI / 2 +
+                (
+                    Math.PI * j
+                    / (phiSteps - 1)
+                );
+
+
+            // Second SuperFormula
+
+            var r2 =
+                superFormula(
+                    phi,
+                    m2,
+                    n1b,
+                    n2b,
+                    n3b,
+                    1,
+                    1
+                );
+
+
+            // ------------------------------------------------
+            // 3D PARAMETRIC EQUATION
+            // ------------------------------------------------
+
+            var x =
+                r1 *
+                Math.cos(phi) *
+                Math.cos(theta) *
+                scale;
+
+
+            var y =
+                r1 *
+                Math.cos(phi) *
+                Math.sin(theta) *
+                scale;
+
+
+            var z =
+                r2 *
+                Math.sin(phi) *
+                scale;
+
+
+            // ------------------------------------------------
+            // Store point
+            // ------------------------------------------------
+
+            positions[index++] = x;
+
+            positions[index++] = y;
+
+            positions[index++] = z;
+
+        }
+
+    }
+
+
+    // ========================================================
+    // THREE.JS GEOMETRY
+    // ========================================================
+
+    particleGeometry =
+        new THREE.BufferGeometry();
+
+
+    particleGeometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(
+            positions,
+            3
+        )
+    );
+
+
+    // ========================================================
+    // PARTICLE MATERIAL
+    // ========================================================
+
+    var particleSize =
+        getNumber("particleSize");
+
+
+    particleMaterial =
+        new THREE.PointsMaterial({
+
+            color: 0xff55ff,
+
+            size: particleSize,
+
+            transparent: true,
+
+            opacity: 0.85,
+
+            blending:
+                THREE.AdditiveBlending,
+
+            depthWrite: false,
+
+            sizeAttenuation: true
+
+        });
+
+
+    // ========================================================
+    // CREATE PARTICLES
+    // ========================================================
+
+    particles =
+        new THREE.Points(
+            particleGeometry,
+            particleMaterial
+        );
+
+
+    scene.add(particles);
+
+
+    // ========================================================
+    // UPDATE VALUES
+    // ========================================================
+
+    updateLabels();
+
+}
+
+
+// ============================================================
+// UPDATE SLIDER LABELS
+// ============================================================
+
+function updateLabels() {
+
+
+    getElement("m1Value").innerHTML =
+        getNumber("m1").toFixed(2);
+
+
+    getElement("n1aValue").innerHTML =
+        getNumber("n1a").toFixed(2);
+
+
+    getElement("n2aValue").innerHTML =
+        getNumber("n2a").toFixed(2);
+
+
+    getElement("n3aValue").innerHTML =
+        getNumber("n3a").toFixed(2);
+
+
+    getElement("m2Value").innerHTML =
+        getNumber("m2").toFixed(2);
+
+
+    getElement("n1bValue").innerHTML =
+        getNumber("n1b").toFixed(2);
+
+
+    getElement("n2bValue").innerHTML =
+        getNumber("n2b").toFixed(2);
+
+
+    getElement("n3bValue").innerHTML =
+        getNumber("n3b").toFixed(2);
+
+
+    getElement("scaleValue").innerHTML =
+        getNumber("scale").toFixed(0);
+
+
+    getElement("particleSizeValue").innerHTML =
+        getNumber("particleSize").toFixed(1);
+
+}
+
+
+// ============================================================
+// INITIALIZE THREE.JS
+// ============================================================
+
+function initializeThree() {
+
+
+    var container =
+        getElement("threeContainer");
+
+
+    // ========================================================
+    // SCENE
+    // ========================================================
+
+    scene =
+        new THREE.Scene();
+
+
+    // ========================================================
+    // CAMERA
+    // ========================================================
+
+    camera =
+        new THREE.PerspectiveCamera(
+
+            45,
+
+            container.clientWidth /
+            container.clientHeight,
+
+            1,
+
+            2000
+
+        );
+
+
+    camera.position.z =
+        cameraDistance;
+
+
+    // ========================================================
+    // RENDERER
+    // ========================================================
+
+    renderer =
+        new THREE.WebGLRenderer({
+
+            antialias: true,
+
+            alpha: true
+
+        });
+
+
+    renderer.setPixelRatio(
+        window.devicePixelRatio
+    );
+
+
+    renderer.setSize(
+        container.clientWidth,
+        container.clientHeight
+    );
+
+
+    renderer.setClearColor(
+        0x000000,
+        1
+    );
+
+
+    container.appendChild(
+        renderer.domElement
+    );
+
+
+    // ========================================================
+    // CREATE INITIAL OBJECT
+    // ========================================================
+
+    createSuperFormula();
+
+
+    // ========================================================
+    // MOUSE EVENTS
+    // ========================================================
+
+    renderer.domElement.addEventListener(
+        "mousedown",
+        mouseDown
+    );
+
+
+    renderer.domElement.addEventListener(
+        "mousemove",
+        mouseMove
+    );
+
+
+    renderer.domElement.addEventListener(
+        "mouseup",
+        mouseUp
+    );
+
+
+    renderer.domElement.addEventListener(
+        "mouseleave",
+        mouseUp
+    );
+
+
+    // ========================================================
+    // TOUCH EVENTS
+    // ========================================================
+
+    renderer.domElement.addEventListener(
+        "touchstart",
+        touchStart,
+        { passive: false }
+    );
+
+
+    renderer.domElement.addEventListener(
+        "touchmove",
+        touchMove,
+        { passive: false }
+    );
+
+
+    renderer.domElement.addEventListener(
+        "touchend",
+        touchEnd
+    );
+
+
+    // ========================================================
+    // ZOOM
+    // ========================================================
+
+    renderer.domElement.addEventListener(
+        "wheel",
+        mouseWheel,
+        { passive: false }
+    );
+
+
+    // ========================================================
+    // RESIZE
+    // ========================================================
+
+    window.addEventListener(
+        "resize",
+        resize
+    );
+
+
+    // ========================================================
+    // START ANIMATION
+    // ========================================================
+
+    animate();
+
+}
+
+
+// ============================================================
+// MOUSE DOWN
+// ============================================================
+
+function mouseDown(event) {
+
+    isDragging = true;
+
+    previousMouseX =
+        event.clientX;
+
+    previousMouseY =
+        event.clientY;
+
+}
+
+
+// ============================================================
+// MOUSE MOVE
+// ============================================================
+
+function mouseMove(event) {
+
+
+    if (!isDragging) {
+
+        return;
+
+    }
+
+
+    var deltaX =
+        event.clientX -
+        previousMouseX;
+
+
+    var deltaY =
+        event.clientY -
+        previousMouseY;
+
+
+    targetRotationY +=
+        deltaX * 0.01;
+
+
+    targetRotationX +=
+        deltaY * 0.01;
+
+
+    previousMouseX =
+        event.clientX;
+
+
+    previousMouseY =
+        event.clientY;
+
+}
+
+
+// ============================================================
+// MOUSE UP
+// ============================================================
+
+function mouseUp() {
+
+    isDragging = false;
+
+}
+
+
+// ============================================================
+// TOUCH START
+// ============================================================
+
+function touchStart(event) {
+
+
+    if (
+        event.touches.length !== 1
+    ) {
+
+        return;
+
+    }
+
+
+    isDragging = true;
+
+
+    previousMouseX =
+        event.touches[0].clientX;
+
+
+    previousMouseY =
+        event.touches[0].clientY;
+
+}
+
+
+// ============================================================
+// TOUCH MOVE
+// ============================================================
+
+function touchMove(event) {
+
+
+    if (
+        !isDragging ||
+        event.touches.length !== 1
+    ) {
+
+        return;
+
+    }
+
+
+    event.preventDefault();
+
+
+    var x =
+        event.touches[0].clientX;
+
+
+    var y =
+        event.touches[0].clientY;
+
+
+    var deltaX =
+        x - previousMouseX;
+
+
+    var deltaY =
+        y - previousMouseY;
+
+
+    targetRotationY +=
+        deltaX * 0.01;
+
+
+    targetRotationX +=
+        deltaY * 0.01;
+
+
+    previousMouseX = x;
+
+    previousMouseY = y;
+
+}
+
+
+// ============================================================
+// TOUCH END
+// ============================================================
+
+function touchEnd() {
+
+    isDragging = false;
+
+}
+
+
+// ============================================================
+// MOUSE WHEEL
+// ============================================================
+
+function mouseWheel(event) {
+
+
+    event.preventDefault();
+
+
+    cameraDistance +=
+        event.deltaY * 0.5;
+
+
+    // Minimum zoom
+
+    if (
+        cameraDistance < 150
+    ) {
+
+        cameraDistance = 150;
+
+    }
+
+
+    // Maximum zoom
+
+    if (
+        cameraDistance > 900
+    ) {
+
+        cameraDistance = 900;
+
+    }
+
+}
+
+
+// ============================================================
+// ANIMATION
+// ============================================================
+
+function animate() {
+
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    // --------------------------------------------------------
+    // Smooth rotation
+    // --------------------------------------------------------
+
+    rotationX +=
+        (
+            targetRotationX -
+            rotationX
+        ) * 0.08;
+
+
+    rotationY +=
+        (
+            targetRotationY -
+            rotationY
+        ) * 0.08;
+
+
+    if (particles) {
+
+        particles.rotation.x =
+            rotationX;
+
+
+        particles.rotation.y =
+            rotationY;
+
+    }
+
+
+    // --------------------------------------------------------
+    // Camera zoom
+    // --------------------------------------------------------
+
+    camera.position.z +=
+        (
+            cameraDistance -
+            camera.position.z
+        ) * 0.08;
+
+
+    camera.lookAt(
+        scene.position
+    );
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
+
+
+// ============================================================
+// RESIZE
+// ============================================================
+
+function resize() {
+
+
+    var container =
+        getElement("threeContainer");
+
+
+    camera.aspect =
+        container.clientWidth /
+        container.clientHeight;
+
+
+    camera.updateProjectionMatrix();
+
+
+    renderer.setSize(
+        container.clientWidth,
+        container.clientHeight
+    );
+
+}
+
+
+// ============================================================
+// RESET
+// ============================================================
+
+function resetValues() {
+
+
+    getElement("m1").value =
+        DEFAULTS.m1;
+
+
+    getElement("n1a").value =
+        DEFAULTS.n1a;
+
+
+    getElement("n2a").value =
+        DEFAULTS.n2a;
+
+
+    getElement("n3a").value =
+        DEFAULTS.n3a;
+
+
+    getElement("m2").value =
+        DEFAULTS.m2;
+
+
+    getElement("n1b").value =
+        DEFAULTS.n1b;
+
+
+    getElement("n2b").value =
+        DEFAULTS.n2b;
+
+
+    getElement("n3b").value =
+        DEFAULTS.n3b;
+
+
+    getElement("scale").value =
+        DEFAULTS.scale;
+
+
+    getElement("particleSize").value =
+        DEFAULTS.particleSize;
+
+
+    createSuperFormula();
+
+}
+
+
+// ============================================================
+// RANDOM
+// ============================================================
+
+function randomValues() {
+
+
+    getElement("m1").value =
+        (
+            Math.random() * 15 + 1
+        ).toFixed(2);
+
+
+    getElement("n1a").value =
+        (
+            Math.random() * 2 + 0.1
+        ).toFixed(2);
+
+
+    getElement("n2a").value =
+        (
+            Math.random() * 3 + 0.2
+        ).toFixed(2);
+
+
+    getElement("n3a").value =
+        (
+            Math.random() * 3 + 0.2
+        ).toFixed(2);
+
+
+    getElement("m2").value =
+        (
+            Math.random() * 15 + 1
+        ).toFixed(2);
+
+
+    getElement("n1b").value =
+        (
+            Math.random() * 2 + 0.1
+        ).toFixed(2);
+
+
+    getElement("n2b").value =
+        (
+            Math.random() * 3 + 0.2
+        ).toFixed(2);
+
+
+    getElement("n3b").value =
+        (
+            Math.random() * 3 + 0.2
+        ).toFixed(2);
+
+
+    createSuperFormula();
+
+}
+
+
+// ============================================================
+// BUTTON EVENTS
+// ============================================================
+
+getElement("resetButton")
+    .addEventListener(
+        "click",
+        resetValues
+    );
+
+
+getElement("randomButton")
+    .addEventListener(
+        "click",
+        randomValues
+    );
+
+
+// ============================================================
+// SLIDER EVENTS
+// ============================================================
+
+var sliderIds = [
+
+    "m1",
+
+    "n1a",
+
+    "n2a",
+
+    "n3a",
+
+    "m2",
+
+    "n1b",
+
+    "n2b",
+
+    "n3b",
+
+    "scale",
+
+    "particleSize"
+
+];
+
+
+for (
+    var s = 0;
+    s < sliderIds.length;
+    s++
+) {
+
+
+    getElement(
+        sliderIds[s]
+    ).addEventListener(
+        "input",
+        function () {
+
+            updateLabels();
+
+            createSuperFormula();
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// START APPLICATION
+// ============================================================
+
+initializeThree();
+
+
+    </script>
+
+
+</body>
+
+</html>
